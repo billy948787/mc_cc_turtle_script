@@ -3,147 +3,158 @@
 -- it will automatically dig the tunnel in a square shape
 -- and refuel when needed
 local function refuel()
-	local prev = turtle.getSelectedSlot()
-	local hasFueled = false
-	if turtle.getFuelLevel() == 0 then
-		for i = 1, 16 do
-			turtle.select(i)
-			-- first check if the item is a fuel
-			if turtle.refuel(0) then
-				turtle.refuel(1)
-				hasFueled = true
-				print("Refueled with slot " .. i)
-				break
-			end
-		end
-	end
+    local prev = turtle.getSelectedSlot()
+    local hasFueled = false
+    if turtle.getFuelLevel() < 10 then
+        for i = 1, 16 do
+            turtle.select(i)
+            -- first check if the item is a fuel
+            if turtle.refuel(0) then
+                turtle.refuel(1)
+                hasFueled = true
+                print("Refueled with slot " .. i)
+                break
+            end
+        end
+    else
+        hasFueled = true
+    end
 
-	turtle.select(prev)
-	return hasFueled
+    turtle.select(prev)
+    return hasFueled
 end
 
 local function mine(size)
-	-- first dig front block
-	turtle.dig()
-	-- then forward
-	turtle.forward()
-	for i = 1, size do
-		local turn = (i % 2 == 1) and turtle.turnRight or turtle.turnLeft
-		local reverseTurn = (i % 2 == 1) and turtle.turnLeft or turtle.turnRight
-		turn()
-		for j = 2, size do
-			turtle.dig()
-			if j <= size then
-				turtle.forward()
-			end
-		end
-		if i < size then
-			turtle.digUp()
-			turtle.up()
-			reverseTurn()
-		end
-	end
+    -- first dig front block
+    turtle.dig()
+    -- then forward
+    turtle.forward()
+    for i = 1, size do
+        local turn = (i % 2 == 1) and turtle.turnRight or turtle.turnLeft
+        local reverseTurn = (i % 2 == 1) and turtle.turnLeft or turtle.turnRight
+        turn()
+        for j = 2, size do
+            turtle.dig()
+            if j <= size then
+                turtle.forward()
+            end
+        end
+        if i < size then
+            turtle.digUp()
+            turtle.up()
+            reverseTurn()
+        end
+    end
 
-	local finalTurn = (size % 2 == 1) and turtle.turnLeft or turtle.turnRight
-	local finalReverseTurn = (size % 2 == 1) and turtle.turnRight or turtle.turnLeft
+    local finalTurn = (size % 2 == 1) and turtle.turnLeft or turtle.turnRight
+    local finalReverseTurn = (size % 2 == 1) and turtle.turnRight or turtle.turnLeft
 
-	finalTurn()
-	finalTurn()
+    finalTurn()
+    finalTurn()
 
-	for i = 1, size - 1 do
-		turtle.forward()
-		turtle.down()
-	end
+    for i = 1, size - 1 do
+        turtle.forward()
+        turtle.down()
+    end
 
-	finalReverseTurn()
+    finalReverseTurn()
 end
 local function compactInventory()
-	local prev = turtle.getSelectedSlot()
-	for i = 1, 16 do
-		local di = turtle.getItemDetail(i, true)
-		if di then
-			for j = i + 1, 16 do
-				local dj = turtle.getItemDetail(j, true)
-				if dj and dj.name == di.name and (not di.nbt and not dj.nbt) then
-					turtle.select(j)
-					turtle.transferTo(i)
-				end
-			end
-		end
-	end
-	turtle.select(prev)
+    local prev = turtle.getSelectedSlot()
+    for i = 1, 16 do
+        local di = turtle.getItemDetail(i, true)
+        if di then
+            for j = i + 1, 16 do
+                local dj = turtle.getItemDetail(j, true)
+                if dj and dj.name == di.name and (not di.nbt and not dj.nbt) then
+                    turtle.select(j)
+                    turtle.transferTo(i)
+                end
+            end
+        end
+    end
+    turtle.select(prev)
 end
 
 local function checkIfAllSlotFull()
-	-- compactInventory()
-	for i = 1, 16 do
-		if turtle.getItemSpace(i) > 0 then
-			return false
-		end
-	end
-	return true
+    -- compactInventory()
+    for i = 1, 16 do
+        if turtle.getItemCount(i) == 0 then
+            return false
+        end
+    end
+    return true
 end
 
-local function dropItem()
-	local prev = turtle.getSelectedSlot()
-	local fuelCount = 0
-	local lastFuelSlot = 0
-	for i = 1, 16 do
-		turtle.select(i)
-		if turtle.refuel(0) and fuelCount < 2 then
-			fuelCount = fuelCount + 1
-			lastFuelSlot = i
-		else
-			turtle.drop()
-		end
-	end
 
-	turtle.select(prev)
+local function dropItem()
+    local prev = turtle.getSelectedSlot()
+    local fuelCount = 0
+    local lastFuelSlot = 0
+    for i = 1, 16 do
+        turtle.select(i)
+        if turtle.refuel(0) and fuelCount < 2 then
+            fuelCount = fuelCount + 1
+            lastFuelSlot = i
+        else
+            turtle.drop()
+        end
+    end
+    
+    
+    turtle.select(prev)
 end
 
 local function backToStart()
-	if peripheral.isPresent("front") and peripheral.hasType("front", "inventory") then
-		print("Found inventory in front, dropping items")
-		dropItem()
-		-- rotate back
-		turtle.turnLeft()
-		turtle.turnLeft()
-		IsReturning = false
-	else
-		turtle.forward()
-	end
+    if peripheral.isPresent("front") and peripheral.hasType("front", "inventory") then
+        print("Found inventory in front, dropping items")
+        dropItem()
+        -- rotate back
+        turtle.turnLeft()
+        turtle.turnLeft()
+        IsReturning = false
+    else
+        turtle.forward()
+    end
 end
 
 -- get user input for tunnel size
 print("Enter tunnel size:")
 local size = tonumber(read())
 
+if size % 2 == 0 then
+    print("Size must be an odd number")
+    return
+end
+
 IsReturning = false
 -- main loop
-while true do
-	if not IsReturning and not refuel() then
-		print("Out of fuel, returning to start")
-		-- let turtle rotate
-		turtle.turnLeft()
-		turtle.turnLeft()
-		IsReturning = true
-	end
+while true do 
+    if not refuel() and not IsReturning  then 
+        print("Out of fuel, returning to start")
+        -- let turtle rotate
+        turtle.turnLeft()
+        turtle.turnLeft()
+        IsReturning = true
+    end
 
-	if not IsReturning and checkIfAllSlotFull() then
-		print("All slots are full")
-		-- let turtle rotate
-		turtle.turnLeft()
-		turtle.turnLeft()
-		IsReturning = true
-	end
 
-	if IsReturning then
-		backToStart()
-	else
-		if turtle.detect() then
-			mine(size)
-		else
-			turtle.forward()
-		end
-	end
+    if  not IsReturning and checkIfAllSlotFull()  then
+        print("All slots are full")
+        -- let turtle rotate
+        turtle.turnLeft()
+        turtle.turnLeft()
+        IsReturning = true
+    end
+    
+    if IsReturning then
+        backToStart()
+    else
+        if turtle.detect() then 
+            
+            mine(size)
+        else
+            turtle.forward()
+        end
+    end
 end
