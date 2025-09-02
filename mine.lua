@@ -36,16 +36,79 @@ local function refuel(size)
     return true -- Fuel is sufficient
 end
 
-local function whileDigging(detectFunc, digFunc)
-    while detectFunc() do
-        digFunc()
+local blockKnowledge = {}
+
+local function findEmptySlot()
+    for i = 1, 16 do
+        if turtle.getItemCount(i) == 0 then
+            return i
+        end
+    end
+    return nil
+end
+
+local function isValuableOrLearnBlock(blockData)
+    if not blockData or not blockData.name then
+        return false -- Can't process without a name.
     end
 
+    local blockName = blockData.name
+
+    -- 1. Check the knowledge base first for a quick answer.
+    if blockKnowledge[blockName] ~= nil then
+        return blockKnowledge[blockName]
+    end
+
+    -- 2. If unknown, perform the expensive tag check ONCE.
+    local isOre = false
+    if blockData.tags then
+        for tagName, _ in pairs(blockData.tags) do
+            if string.find(tagName, "ores") then
+                isOre = true
+                break -- Found an ore tag, no need to check further.
+            end
+        end
+    end
+
+    -- 3. Save the knowledge for next time.
+    if isOre then
+        print("Learned: " .. blockName .. " is valuable.")
+        blockKnowledge[blockName] = true
+    else
+        -- Also cache that it's NOT valuable to avoid re-checking common blocks like stone.
+        blockKnowledge[blockName] = false
+    end
+
+    return isOre
+end
+
+local function whileDigging(detectFunc, digFunc, inspectFunc)
+    while detectFunc() do
+        local success, data = inspectFunc()
+        -- Use the new learning function for the check
+        if success and not isValuableOrLearnBlock(data) then
+            -- It's a worthless block, dig and drop it
+            local emptySlot = findEmptySlot()
+            if not emptySlot then
+                -- Inventory is full, can't dig-and-drop.
+                digFunc()
+            else
+                local prevSlot = turtle.getSelectedSlot()
+                turtle.select(emptySlot)
+                digFunc() -- Digs the block into the empty slot
+                turtle.drop() -- Drops the newly acquired item
+                turtle.select(prevSlot)
+            end
+        else
+            -- It's a valuable block (or inspection failed), dig it normally
+            digFunc()
+        end
+    end
 end
 
 local function mine(size)
     -- first dig front block
-    whileDigging(turtle.detect ,turtle.dig)
+    whileDigging(turtle.detect, turtle.dig, turtle.inspect)
     -- then forward
     turtle.forward()
     for i = 1, size do
@@ -53,13 +116,13 @@ local function mine(size)
         local reverseTurn = (i % 2 == 1) and turtle.turnLeft or turtle.turnRight
         turn()
         for j = 2, size do
-            whileDigging(turtle.detect ,turtle.dig)
+            whileDigging(turtle.detect, turtle.dig, turtle.inspect)
             if j <= size then
                 turtle.forward()
             end
         end
         if i < size then
-            whileDigging(turtle.detectUp, turtle.digUp)
+            whileDigging(turtle.detectUp, turtle.digUp, turtle.inspectUp)
             turtle.up()
             reverseTurn()
         end
