@@ -4,7 +4,7 @@
 -- and refuel when needed
 local function refuel(size)
     local prev = turtle.getSelectedSlot()
-    local targetFuelLevel = size * size + 2 * (size - 1) + 20
+    local targetFuelLevel = ((size * size * 2) + (size * 4) + 50) * 10
     if turtle.getFuelLevel() < targetFuelLevel then
         -- found fuel slots
         local slots = {}
