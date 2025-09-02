@@ -5,7 +5,7 @@
 local function refuel(size)
     local prev = turtle.getSelectedSlot()
     local hasFueled = false
-    if turtle.getFuelLevel() < size * size * 2 then
+    if turtle.getFuelLevel() < size * size + 2 * (size - 1) + 20 then
         for i = 1, 16 do
             turtle.select(i)
             -- first check if the item is a fuel
