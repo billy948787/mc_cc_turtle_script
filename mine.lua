@@ -24,9 +24,16 @@ local function refuel(size)
     return hasFueled
 end
 
+local function whileDigging(detectFunc, digFunc)
+    while detectFunc() do
+        digFunc()
+    end
+
+end
+
 local function mine(size)
     -- first dig front block
-    turtle.dig()
+    whileDigging(turtle.detect ,turtle.dig)
     -- then forward
     turtle.forward()
     for i = 1, size do
@@ -34,13 +41,13 @@ local function mine(size)
         local reverseTurn = (i % 2 == 1) and turtle.turnLeft or turtle.turnRight
         turn()
         for j = 2, size do
-            turtle.dig()
+            whileDigging(turtle.detect ,turtle.dig)
             if j <= size then
                 turtle.forward()
             end
         end
         if i < size then
-            turtle.digUp()
+            whileDigging(turtle.detectUp, turtle.digUp)
             turtle.up()
             reverseTurn()
         end
