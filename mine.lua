@@ -4,24 +4,36 @@
 -- and refuel when needed
 local function refuel(size)
     local prev = turtle.getSelectedSlot()
-    local hasFueled = false
-    if turtle.getFuelLevel() < size * size + 2 * (size - 1) + 20 then
+    local targetFuelLevel = size * size + 2 * (size - 1) + 20
+    if turtle.getFuelLevel() < targetFuelLevel then
+        -- found fuel slots
+        local slots = {}
         for i = 1, 16 do
             turtle.select(i)
             -- first check if the item is a fuel
             if turtle.refuel(0) then
-                turtle.refuel(1)
-                hasFueled = true
-                print("Refueled with slot " .. i)
-                break
+                table.insert(slots, i)
             end
         end
-    else
-        hasFueled = true
+
+        while turtle.getFuelLevel() < targetFuelLevel do
+            if #slots == 0 then
+                print("No more fuel to refuel")
+                turtle.select(prev)
+                return false -- No fuel left, return false
+            end
+            turtle.select(slots[1])
+            if turtle.getItemCount(slots[1]) > 0 then
+                turtle.refuel(1)
+            else
+                -- This stack is empty, remove it and try the next one
+                table.remove(slots, 1)
+            end
+        end
     end
 
     turtle.select(prev)
-    return hasFueled
+    return true -- Fuel is sufficient
 end
 
 local function whileDigging(detectFunc, digFunc)
