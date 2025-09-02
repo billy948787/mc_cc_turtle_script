@@ -2,10 +2,10 @@
 -- example mine(5) means dig a tunnel with 5x5
 -- it will automatically dig the tunnel in a square shape
 -- and refuel when needed
-local function refuel()
+local function refuel(size)
     local prev = turtle.getSelectedSlot()
     local hasFueled = false
-    if turtle.getFuelLevel() < 10 then
+    if turtle.getFuelLevel() < size * size * 2 then
         for i = 1, 16 do
             turtle.select(i)
             -- first check if the item is a fuel
@@ -122,15 +122,11 @@ end
 print("Enter tunnel size:")
 local size = tonumber(read())
 
-if size % 2 == 0 then
-    print("Size must be an odd number")
-    return
-end
 
 IsReturning = false
 -- main loop
 while true do 
-    if not refuel() and not IsReturning  then 
+    if not refuel(size) and not IsReturning  then 
         print("Out of fuel, returning to start")
         -- let turtle rotate
         turtle.turnLeft()
