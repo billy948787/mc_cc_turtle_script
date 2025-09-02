@@ -63,7 +63,7 @@ local function isValuableOrLearnBlock(blockData)
     local isOre = false
     if blockData.tags then
         for tagName, _ in pairs(blockData.tags) do
-            if string.find(tagName, "ores") then
+            if string.find(tagName, "c:ores") then
                 isOre = true
                 break -- Found an ore tag, no need to check further.
             end
