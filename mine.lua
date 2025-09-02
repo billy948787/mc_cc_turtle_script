@@ -72,7 +72,9 @@ local function mine(size)
     finalTurn()
 
     for i = 1, size - 1 do
-        turtle.forward()
+        if size % 2 == 1 then
+            turtle.forward()
+        end
         turtle.down()
     end
 
