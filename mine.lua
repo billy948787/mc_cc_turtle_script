@@ -2,10 +2,9 @@
 -- example mine(5) means dig a tunnel with 5x5
 -- it will automatically dig the tunnel in a square shape
 -- and refuel when needed
-local function refuel(size)
+local function refuel()
     local prev = turtle.getSelectedSlot()
-    local targetFuelLevel = (size * size * 2) + (size * 4) + 50
-    if turtle.getFuelLevel() < targetFuelLevel then
+    if turtle.getFuelLevel() < TargetFuelLevel then
         -- found fuel slots
         local slots = {}
         for i = 1, 16 do
@@ -16,7 +15,7 @@ local function refuel(size)
             end
         end
 
-        while turtle.getFuelLevel() < targetFuelLevel do
+        while turtle.getFuelLevel() < TargetFuelLevel do
             if #slots == 0 then
                 print("No more fuel to refuel")
                 turtle.select(prev)
@@ -107,6 +106,7 @@ local function whileDigging(detectFunc, digFunc, inspectFunc)
 end
 
 local function mine(size)
+    local prevFuelLevel = turtle.getFuelLevel()
     -- first dig front block
     whileDigging(turtle.detect, turtle.dig, turtle.inspect)
     -- then forward
@@ -142,6 +142,8 @@ local function mine(size)
     end
 
     finalReverseTurn()
+
+    return prevFuelLevel - turtle.getFuelLevel()
 end
 local function compactInventory()
     local prev = turtle.getSelectedSlot()
@@ -208,6 +210,8 @@ local size = tonumber(read())
 
 
 IsReturning = false
+-- give a start level but it will change overtime
+TargetFuelLevel = (size * size * 2) + (size * 4) + 50
 -- main loop
 while true do 
     if not refuel(size) and not IsReturning  then 
@@ -231,8 +235,11 @@ while true do
         backToStart()
     else
         if turtle.detect() then 
-            
-            mine(size)
+            local useedFuelInMine = mine(size)
+            if(useedFuelInMine > TargetFuelLevel) then
+                TargetFuelLevel = useedFuelInMine * 2
+                print("New target fuel level: " .. TargetFuelLevel)
+            end
         else
             turtle.forward()
         end
