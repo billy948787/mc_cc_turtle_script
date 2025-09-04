@@ -94,13 +94,18 @@ local function whileDigging(detectFunc, digFunc, inspectFunc)
             else
                 local prevSlot = turtle.getSelectedSlot()
                 turtle.select(emptySlot)
-                digFunc() -- Digs the block into the empty slot
+                digFunc()     -- Digs the block into the empty slot
                 turtle.drop() -- Drops the newly acquired item
                 turtle.select(prevSlot)
             end
         else
             -- It's a valuable block (or inspection failed), dig it normally
-            digFunc()
+            digResult = digFunc()
+        end
+        
+        if not digResult then
+            print("Failed to dig block, retrying...")
+            break
         end
     end
 end
@@ -235,9 +240,9 @@ while true do
         backToStart()
     else
         if turtle.detect() then 
-            local useedFuelInMine = mine(size)
-            if(useedFuelInMine > TargetFuelLevel) then
-                TargetFuelLevel = useedFuelInMine * 2
+            local usedFuelInMine = mine(size)
+            if(usedFuelInMine > TargetFuelLevel) then
+                TargetFuelLevel = usedFuelInMine * 2
                 print("New target fuel level: " .. TargetFuelLevel)
             end
         else
