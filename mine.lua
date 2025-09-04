@@ -84,17 +84,18 @@ end
 local function whileDigging(detectFunc, digFunc, inspectFunc)
     while detectFunc() do
         local success, data = inspectFunc()
+        local digResult = false
         -- Use the new learning function for the check
         if success and not isValuableOrLearnBlock(data) then
             -- It's a worthless block, dig and drop it
             local emptySlot = findEmptySlot()
             if not emptySlot then
                 -- Inventory is full, can't dig-and-drop.
-                digFunc()
+                digResult =  digFunc()
             else
                 local prevSlot = turtle.getSelectedSlot()
                 turtle.select(emptySlot)
-                digFunc()     -- Digs the block into the empty slot
+                digResult = digFunc()     -- Digs the block into the empty slot
                 turtle.drop() -- Drops the newly acquired item
                 turtle.select(prevSlot)
             end
