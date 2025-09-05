@@ -35,6 +35,14 @@ local function refuel()
     return true -- Fuel is sufficient
 end
 
+local function safeMove(moveFunc)
+    while not moveFunc() do
+        print("Movement failed, retrying...")
+        os.sleep(0.5) -- Wait a bit before retrying
+    end
+    
+end
+
 local blockKnowledge = {}
 
 local function findEmptySlot()
@@ -116,7 +124,7 @@ local function mine(size)
     -- first dig front block
     whileDigging(turtle.detect, turtle.dig, turtle.inspect)
     -- then forward
-    turtle.forward()
+    safeMove(turtle.forward)
     for i = 1, size do
         local turn = (i % 2 == 1) and turtle.turnRight or turtle.turnLeft
         local reverseTurn = (i % 2 == 1) and turtle.turnLeft or turtle.turnRight
@@ -124,12 +132,12 @@ local function mine(size)
         for j = 2, size do
             whileDigging(turtle.detect, turtle.dig, turtle.inspect)
             if j <= size then
-                turtle.forward()
+                safeMove(turtle.forward)
             end
         end
         if i < size then
             whileDigging(turtle.detectUp, turtle.digUp, turtle.inspectUp)
-            turtle.up()
+            safeMove(turtle.up)
             reverseTurn()
         end
     end
@@ -142,9 +150,9 @@ local function mine(size)
 
     for i = 1, size - 1 do
         if size % 2 == 1 then
-            turtle.forward()
+            safeMove(turtle.forward)
         end
-        turtle.down()
+        safeMove(turtle.down)
     end
 
     finalReverseTurn()
@@ -206,7 +214,11 @@ local function backToStart()
         turtle.turnLeft()
         IsReturning = false
     else
-        turtle.forward()
+        if turtle.detect() then
+            whileDigging(turtle.detect, turtle.dig, turtle.inspect)
+        else
+            safeMove(turtle.forward)
+        end
     end
 end
 
